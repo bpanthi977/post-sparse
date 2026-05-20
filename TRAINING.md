@@ -20,3 +20,27 @@ After each epoch, encode the full COCO val set (5K images, ~25K captions) in the
 - **Text→Image**: reverse direction — for each caption, find the matching image from the 5K pool.
 
 This gives six numbers: R@1/5/10 in both directions. **COCO val image→text R@1** is used as the single early-stopping signal (most sensitive to alignment quality). All six are logged per epoch.
+
+## Run Logging
+
+Before training starts, a run folder is created under `logs/` with the naming pattern:
+
+```
+yymmdd-hhmmss-<6 random lowercase letters>
+```
+
+Example: `250520-143201-abkrxf`
+
+Each run folder contains:
+
+```
+logs/
+  250520-143201-abkrxf/
+    hparams.yaml      ← all hyperparameters saved before training begins
+    train_loss.csv    ← training loss logged per step or epoch
+    val_metrics.csv   ← val R@1/5/10 (both directions) logged per epoch
+    best.pt           ← model checkpoint with highest COCO val image→text R@1
+    last.pt           ← model checkpoint at end of training
+```
+
+All losses, metrics, and hyperparameters are also logged to **Weights & Biases** under the project `post-sparse`. The run name matches the folder name (`yymmdd-hhmmss-xxxxxx`).
