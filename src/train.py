@@ -115,7 +115,7 @@ def train(config: dict) -> None:
         model.eval()
         all_img_z, all_txt_z = [], []
         with torch.no_grad():
-            for img_emb, txt_emb in val_loader:         # [B, D], [B, 5, D]
+            for img_emb, txt_emb in tqdm(val_loader, desc='Validation'):         # [B, D], [B, 5, D]
                 img_emb = img_emb.to(device)
                 txt_emb = txt_emb.to(device)
                 B = img_emb.shape[0]
