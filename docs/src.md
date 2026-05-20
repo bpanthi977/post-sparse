@@ -172,3 +172,48 @@ Standalone script: `uv run python scripts/cache_embeddings.py config/base.yaml`
 Calls `cache_embeddings()` from `src/data.py` for both train and val splits. Prints embedding shapes on completion. Idempotent — skips if files already exist.
 
 ---
+
+## 10. `scripts/modality_score_plot.py`
+
+Standalone script: `uv run python scripts/modality_score_plot.py <run_dir> [--base-embedding]`
+
+Computes and plots the modality score distribution of sparse features — the primary diagnostic for whether learned features are genuinely multimodal. Uses the val set (first caption per image only).
+
+### Functions
+
+```python
+activations_from_heads(model, val_img, val_txt, device) -> (Z_I, Z_T)
+# Passes cached val embeddings through trained projection heads.
+# Returns raw ReLU activations [N, k] without L2 normalisation,
+# so magnitudes are preserved for thresholding.
+
+activations_from_base_embeddings(val_img, val_txt) -> (Z_I, Z_T)
+# Sanity-check mode: applies torch.sign to the raw CLIP embeddings [N, 512].
+# A dimension is "active" when sgn = +1 (> TAU = 0.001).
+# Expected result: scores concentrated near 0.5, since CLIP embeddings
+# are already cross-modally aligned.
+
+compute_modality_scores(Z_I, Z_T) -> (mod_score, n_total, n_dead, n_alive)
+# For each feature j: ModScore(j) = img_activations(j) / total_activations(j).
+# Dead features (never active above TAU in either modality) are excluded.
+# Returns mod_score [n_alive] and counts.
+
+build_stats(mod_score, n_total, n_dead, n_alive) -> list[str]
+# Formats summary statistics: dead/active feature counts,
+# % multimodal (0.4–0.6), % unimodal image (>0.9), % unimodal text (<0.1).
+
+plot_modality_scores(mod_score, title, fig_path)
+# 1D histogram of modality scores (50 bins, range [0, 1]).
+# Red dashed line at 0.5 marks the perfectly multimodal point.
+```
+
+### Outputs (saved inside `<run_dir>`)
+
+| File | Description |
+|------|-------------|
+| `figs/modality_score.png` | Modality score histogram (trained heads) |
+| `figs/modality_score_base.png` | Modality score histogram (`--base-embedding`) |
+| `modality_score.txt` | Summary statistics (trained heads) |
+| `modality_score_base.txt` | Summary statistics (`--base-embedding`) |
+
+---

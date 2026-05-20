@@ -26,6 +26,9 @@ uv run python scripts/cache_embeddings.py config/base.yaml
 
 # Train
 uv run python src/train.py config/base.yaml
+
+# Plot modality score distribution for a completed run
+uv run python scripts/modality_score_plot.py logs/<run_name>
 ```
 
 ## Code
@@ -39,4 +42,5 @@ uv run python src/train.py config/base.yaml
 | `src/train.py` | Training loop entry point |
 | `src/utils.py` | Run folder creation, hparams saving |
 | `scripts/cache_embeddings.py` | One-time CLIP embedding precomputation |
+| `scripts/modality_score_plot.py` | Modality score distribution plot and statistics |
 | `config/base.yaml` | All hyperparameters |
