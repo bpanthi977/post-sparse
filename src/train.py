@@ -6,7 +6,7 @@ import torch
 import torch.optim as optim
 import wandb
 import yaml
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -43,14 +43,23 @@ def train(config: dict) -> None:
 
     train_img = torch.load(emb_dir / "train_image_embeddings.pt", weights_only=True)
     train_txt = torch.load(emb_dir / "train_text_embeddings.pt", weights_only=True)
-    val_img = torch.load(emb_dir / "val_image_embeddings.pt", weights_only=True).to(device)
-    val_txt = torch.load(emb_dir / "val_text_embeddings.pt", weights_only=True).to(device)
+    val_img = torch.load(emb_dir / "val_image_embeddings.pt", weights_only=True)
+    val_txt = torch.load(emb_dir / "val_text_embeddings.pt", weights_only=True)
 
     train_dataset = CachedPairsDataset(train_img, train_txt)
     train_loader = DataLoader(
         train_dataset,
         batch_size=config["training"]["batch_size"],
         shuffle=True,
+        num_workers=config["data"]["num_workers"],
+        pin_memory=True,
+    )
+
+    # val_img: [N, D],  val_txt: [N, 5, D] — TensorDataset yields (img[D], txt[5,D]) per item
+    val_loader = DataLoader(
+        TensorDataset(val_img, val_txt),
+        batch_size=config["training"]["batch_size"],
+        shuffle=False,
         num_workers=config["data"]["num_workers"],
         pin_memory=True,
     )
@@ -104,14 +113,21 @@ def train(config: dict) -> None:
 
         # --- validation ---
         model.eval()
+        all_img_z, all_txt_z = [], []
         with torch.no_grad():
-            val_img_z = model.image_head(val_img)                         # [N, proj_dim]
-            N_val = val_txt.shape[0]
-            val_txt_z = model.text_head(val_txt.reshape(N_val * 5, -1))   # [N*5, proj_dim]
-            val_txt_z = val_txt_z.reshape(N_val, 5, -1)                   # [N, 5, proj_dim]
+            for img_emb, txt_emb in val_loader:         # [B, D], [B, 5, D]
+                img_emb = img_emb.to(device)
+                txt_emb = txt_emb.to(device)
+                B = img_emb.shape[0]
+                all_img_z.append(model.image_head(img_emb).cpu())
+                all_txt_z.append(
+                    model.text_head(txt_emb.reshape(B * 5, -1)).reshape(B, 5, -1).cpu()
+                )
+        val_img_z = torch.cat(all_img_z, dim=0)        # [N, proj_dim]
+        val_txt_z = torch.cat(all_txt_z, dim=0)        # [N, 5, proj_dim]
 
-        val_metrics = coco_retrieval_metrics(val_img_z.cpu(), val_txt_z.cpu())
-        spar = sparsity_metrics(val_img_z, val_txt_z.reshape(-1, val_txt_z.shape[-1]))
+        val_metrics = coco_retrieval_metrics(val_img_z, val_txt_z)
+        spar = sparsity_metrics(val_img_z, val_txt_z.reshape(-1, val_txt_z.shape[-1]))  # flatten [N*5, D]
         avg_loss = epoch_loss / len(train_loader)
 
         wandb.log(
