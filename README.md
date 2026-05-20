@@ -18,6 +18,9 @@ Post-hoc sparse multimodal alignment via high-dimensional contrastive projection
 # Install dependencies
 uv sync
 
+# Download the dataset (one-time)
+sh scripts/download_dataset.sh
+
 # Pre-compute CLIP embeddings (one-time, requires COCO images in data/coco/)
 uv run python scripts/cache_embeddings.py config/base.yaml
 
