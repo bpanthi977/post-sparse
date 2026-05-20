@@ -1,0 +1,17 @@
+[project]
+name = "post-sparse"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.3",
+    "torchvision>=0.18",
+    "open-clip-torch>=2.26",
+    "wandb>=0.17",
+    "pyyaml>=6.0",
+    "tqdm>=4.66",
+    "numpy>=1.26",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

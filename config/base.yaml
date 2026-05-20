@@ -1,0 +1,22 @@
+model:
+  clip_model: "ViT-B-32"
+  clip_pretrained: "openai"
+  proj_dim: 16384
+
+training:
+  batch_size: 512
+  lr: 1.0e-3
+  weight_decay: 0.01
+  warmup_fraction: 0.05
+  patience: 3
+  grad_accum_steps: 1
+  max_epochs: 30
+
+data:
+  data_dir: "data/coco"
+  embeddings_dir: "data/coco/embeddings"
+  num_workers: 8
+
+logging:
+  log_dir: "logs"
+  wandb_project: "post-sparse"
