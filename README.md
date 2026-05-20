@@ -6,10 +6,11 @@ Post-hoc sparse multimodal alignment via high-dimensional contrastive projection
 
 | File | Description |
 |------|-------------|
-| [PROPOSAL.md](PROPOSAL.md) | Research proposal: motivation, method, and distinction from prior work |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Model architecture and loss function design |
-| [DATASET.md](DATASET.md) | Dataset choices, download instructions, and embedding caching strategy |
-| [TRAINING.md](TRAINING.md) | Optimizer, schedule, batch size, and early stopping criterion |
+| [PROPOSAL.md](docs/PROPOSAL.md) | Research proposal: motivation, method, and distinction from prior work |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Model architecture and loss function design |
+| [DATASET.md](docs/DATASET.md) | Dataset choices, download instructions, and embedding caching strategy |
+| [TRAINING.md](docs/TRAINING.md) | Optimizer, schedule, batch size, and early stopping criterion |
+| [src.md](docs/src.md) | How each file inside src/ is implemented |
 
 ## Usage
 
