@@ -32,7 +32,8 @@ def train(config: dict) -> None:
 
     run_dir = create_run_dir(config["logging"]["log_dir"])
     save_hparams(config, run_dir)
-    wandb.init(project=config["logging"]["wandb_project"], name=run_dir.name, config=config)
+    assert wandb.run, "Do wandb.init() before doing train()"
+    wandb.run.name = run_dir.name
 
     emb_dir = Path(config["data"]["embeddings_dir"])
     if not (emb_dir / "train_image_embeddings.pt").exists():
@@ -157,7 +158,6 @@ def train(config: dict) -> None:
                 break
 
     torch.save(model.state_dict(), run_dir / "last.pt")
-    wandb.finish()
     print(f"Run saved to {run_dir}")
 
 
@@ -165,4 +165,6 @@ if __name__ == "__main__":
     config_path = sys.argv[1] if len(sys.argv) > 1 else "config/base.yaml"
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
+    wandb.init(project=cfg["logging"]["wandb_project"], config=cfg)
     train(cfg)
+    wandb.finish()
