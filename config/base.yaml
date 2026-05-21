@@ -16,6 +16,8 @@ data:
   data_dir: "data/coco"
   embeddings_dir: "data/coco/embeddings"
   num_workers: 8
+  train_subset: 100
+  val_subset: 100
 
 logging:
   log_dir: "logs"

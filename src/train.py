@@ -47,7 +47,7 @@ def train(config: dict) -> None:
     val_img = torch.load(emb_dir / "val_image_embeddings.pt", weights_only=True)
     val_txt = torch.load(emb_dir / "val_text_embeddings.pt", weights_only=True)
 
-    train_dataset = CachedPairsDataset(train_img, train_txt)
+    train_dataset = CachedPairsDataset(train_img, train_txt, subset=config["data"]["train_subset"])
     train_loader = DataLoader(
         train_dataset,
         batch_size=config["training"]["batch_size"],
@@ -56,7 +56,7 @@ def train(config: dict) -> None:
         pin_memory=True,
     )
 
-    val_dataset = CachedPairsDataset(val_img, val_txt)
+    val_dataset = CachedPairsDataset(val_img, val_txt, subset=config["data"]["train_subset"])
 
     model = PostSparseModel(proj_dim=config["model"]["proj_dim"]).to(device)
     optimizer = optim.AdamW(

@@ -23,11 +23,14 @@ class CachedPairsDataset(Dataset):
     the repeated image tensor in memory.
     """
 
-    def __init__(self, img_embs: torch.Tensor, txt_embs: torch.Tensor):
+    def __init__(self, img_embs: torch.Tensor, txt_embs: torch.Tensor, subset: int = -1):
         # img_embs: [N, D],  txt_embs: [N, 5, D]
         self._num_caps = txt_embs.shape[1]
         self.img_embs = img_embs                              # [N, D]
         self.txt_embs = txt_embs.reshape(-1, txt_embs.shape[-1])  # [N*5, D]
+        if subset > 0:
+            self.img_embs = self.img_embs[:subset // self._num_caps]
+            self.txt_embs = self.txt_embs[:subset]
 
     def __len__(self) -> int:
         return len(self.txt_embs)
