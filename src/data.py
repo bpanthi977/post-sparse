@@ -28,8 +28,8 @@ class CachedPairsDataset(Dataset):
         self._num_caps = txt_embs.shape[1]
         self.img_embs = img_embs                              # [N, D]
         self.txt_embs = txt_embs.reshape(-1, txt_embs.shape[-1])  # [N*5, D]
-        if subset > 0:
-            self.img_embs = self.img_embs[:subset // self._num_caps]
+        if subset > -1:
+            self.img_embs = self.img_embs[:1+subset // self._num_caps]
             self.txt_embs = self.txt_embs[:subset]
 
     def __len__(self) -> int:

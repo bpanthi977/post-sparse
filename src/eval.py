@@ -54,6 +54,18 @@ def compute_validation_metrics(
     num_workers: int,
     device: str,
 ) -> Dict[str, float]:
+    if len(val_dataset) == 0:
+        # Fallback for debugging case
+        metrics = {
+            'l0_image': 0.0,
+            'l0_text': 0.0,
+        }
+        for k in [1, 5, 10]:
+            metrics[f"i2t_r{k}"] = 0.0
+            metrics[f"t2i_r{k}"] = 0.0
+
+        return metrics
+
     val_loader = DataLoader(
         val_dataset,
         batch_size=batch_size,

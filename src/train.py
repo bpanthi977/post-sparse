@@ -56,7 +56,7 @@ def train(config: dict) -> None:
         pin_memory=True,
     )
 
-    val_dataset = CachedPairsDataset(val_img, val_txt, subset=config["data"]["train_subset"])
+    val_dataset = CachedPairsDataset(val_img, val_txt, subset=config["data"]["val_subset"])
 
     model = PostSparseModel(proj_dim=config["model"]["proj_dim"]).to(device)
     optimizer = optim.AdamW(
