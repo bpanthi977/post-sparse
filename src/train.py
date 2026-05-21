@@ -17,16 +17,6 @@ from loss import infonce_loss
 from model import PostSparseModel
 from utils import create_run_dir, save_hparams
 
-
-def _cosine_with_warmup(warmup_steps: int, total_steps: int):
-    def lr_lambda(step: int) -> float:
-        if step < warmup_steps:
-            return step / max(1, warmup_steps)
-        progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)
-        return 0.5 * (1.0 + math.cos(math.pi * progress))
-    return lr_lambda
-
-
 def train(config: dict) -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -66,12 +56,6 @@ def train(config: dict) -> None:
     )
 
     max_epochs = config["training"]["max_epochs"]
-    steps_per_epoch = math.ceil(len(train_dataset) / config["training"]["batch_size"])
-    total_steps = max_epochs * steps_per_epoch
-    warmup_steps = int(total_steps * config["training"]["warmup_fraction"])
-    scheduler = torch.optim.lr_scheduler.LambdaLR(
-        optimizer, _cosine_with_warmup(warmup_steps, total_steps)
-    )
 
     grad_accum = config["training"]["grad_accum_steps"]
     patience = config["training"]["patience"]
@@ -97,7 +81,6 @@ def train(config: dict) -> None:
 
             if (micro_step + 1) % grad_accum == 0:
                 optimizer.step()
-                scheduler.step()
                 optimizer.zero_grad()
                 wandb.log(
                     {"train/loss": raw_loss.item(), "train/tau": model.tau.item()},

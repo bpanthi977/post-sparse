@@ -12,12 +12,12 @@ from train import train
 
 POSTSPARSE_SWEEP = {
     "method": "bayes",
-    "metric": {"name": "val/i2t_r1", "goal": "maximize"},
+    "metric": {"name": "train/epoch_loss", "goal": "minimize"},
     "parameters": {
         "lr":             {"distribution": "log_uniform_values", "min": 1e-4, "max": 1e-1},
-        # "weight_decay":   {"distribution": "log_uniform_values", "min": 1e-5, "max": 1e-1},
-        # "proj_dim":       {"values": [4096, 8192, 16384]},
-        # "batch_size":     {"values": [256, 512, 1024]},
+        "weight_decay":   {"distribution": "log_uniform_values", "min": 1e-5, "max": 1e-1},
+        "proj_dim":       {"values": [4096, 8192, 16384]},
+        "batch_size":     {"values": [256, 512, 1024]},
         # "warmup_fraction":{"distribution": "uniform", "min": 0.01, "max": 0.1},
     },
 }
