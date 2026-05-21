@@ -1,6 +1,8 @@
 from typing import Dict, Tuple
 
 import torch
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 
 def coco_retrieval_metrics(
@@ -43,3 +45,33 @@ def sparsity_metrics(z_i: torch.Tensor, z_t: torch.Tensor) -> Dict[str, float]:
         "l0_image": (z_i > 0).float().mean().item(),
         "l0_text": (z_t > 0).float().mean().item(),
     }
+
+
+def compute_validation_metrics(
+    model,
+    val_dataset,
+    batch_size: int,
+    num_workers: int,
+    device: str,
+) -> Dict[str, float]:
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+    )
+    model.eval()
+    all_img_z, all_txt_z = [], []
+    with torch.no_grad():
+        for img_emb, txt_emb in tqdm(val_loader, desc="Validation"):
+            all_img_z.append(model.image_head(img_emb.to(device)).cpu())
+            all_txt_z.append(model.text_head(txt_emb.to(device)).cpu())
+
+    N = len(val_dataset) // 5
+    val_img_z = torch.cat(all_img_z)[::5]              # [N, proj_dim]
+    val_txt_z = torch.cat(all_txt_z).reshape(N, 5, -1) # [N, 5, proj_dim]
+
+    metrics = coco_retrieval_metrics(val_img_z, val_txt_z)
+    metrics.update(sparsity_metrics(val_img_z, val_txt_z.reshape(-1, val_txt_z.shape[-1])))
+    return metrics

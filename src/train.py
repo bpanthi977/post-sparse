@@ -6,13 +6,13 @@ import torch
 import torch.optim as optim
 import wandb
 import yaml
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).parent))
 
 from data import CachedPairsDataset
-from eval import coco_retrieval_metrics, sparsity_metrics
+from eval import compute_validation_metrics
 from loss import infonce_loss
 from model import PostSparseModel
 from utils import create_run_dir, save_hparams
@@ -56,14 +56,7 @@ def train(config: dict) -> None:
         pin_memory=True,
     )
 
-    # val_img: [N, D],  val_txt: [N, 5, D] — TensorDataset yields (img[D], txt[5,D]) per item
-    val_loader = DataLoader(
-        TensorDataset(val_img, val_txt),
-        batch_size=config["training"]["batch_size"],
-        shuffle=False,
-        num_workers=config["data"]["num_workers"],
-        pin_memory=True,
-    )
+    val_dataset = CachedPairsDataset(val_img, val_txt)
 
     model = PostSparseModel(proj_dim=config["model"]["proj_dim"]).to(device)
     optimizer = optim.AdamW(
@@ -113,30 +106,16 @@ def train(config: dict) -> None:
                 global_step += 1
 
         # --- validation ---
-        model.eval()
-        all_img_z, all_txt_z = [], []
-        with torch.no_grad():
-            for img_emb, txt_emb in tqdm(val_loader, desc='Validation'):         # [B, D], [B, 5, D]
-                img_emb = img_emb.to(device)
-                txt_emb = txt_emb.to(device)
-                B = img_emb.shape[0]
-                all_img_z.append(model.image_head(img_emb).cpu())
-                all_txt_z.append(
-                    model.text_head(txt_emb.reshape(B * 5, -1)).reshape(B, 5, -1).cpu()
-                )
-        val_img_z = torch.cat(all_img_z, dim=0)        # [N, proj_dim]
-        val_txt_z = torch.cat(all_txt_z, dim=0)        # [N, 5, proj_dim]
-
-        val_metrics = coco_retrieval_metrics(val_img_z, val_txt_z)
-        spar = sparsity_metrics(val_img_z, val_txt_z.reshape(-1, val_txt_z.shape[-1]))  # flatten [N*5, D]
+        val_metrics = compute_validation_metrics(
+            model, val_dataset,
+            batch_size=config["training"]["batch_size"],
+            num_workers=config["data"]["num_workers"],
+            device=device,
+        )
         avg_loss = epoch_loss / len(train_loader)
 
         wandb.log(
-            {
-                **{f"val/{k}": v for k, v in val_metrics.items()},
-                **{f"val/{k}": v for k, v in spar.items()},
-                "train/epoch_loss": avg_loss,
-            },
+            {**{f"val/{k}": v for k, v in val_metrics.items()}, "train/epoch_loss": avg_loss},
             step=global_step,
         )
         print(
