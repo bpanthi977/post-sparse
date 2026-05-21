@@ -18,7 +18,7 @@ class PostSparseModel(nn.Module):
         super().__init__()
         self.image_head = ProjectionHead(in_dim, proj_dim)
         self.text_head = ProjectionHead(in_dim, proj_dim)
-        self.log_tau = nn.Parameter(torch.tensor(math.log(0.07)))
+        self.log_tau = nn.Parameter(torch.tensor(math.log(0.01)))
 
     @property
     def tau(self) -> torch.Tensor:
