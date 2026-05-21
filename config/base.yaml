@@ -7,16 +7,16 @@ training:
   batch_size: 512
   lr: 1.0e-3
   weight_decay: 0.01
-  patience: 3
+  patience: 30
   grad_accum_steps: 1
   max_epochs: 30
 
 data:
   data_dir: "data/coco"
   embeddings_dir: "data/coco/embeddings"
-  num_workers: 8
-  train_subset: 100
-  val_subset: 100
+  num_workers: 2
+  train_subset: -1
+  val_subset: 0
 
 logging:
   log_dir: "logs"
